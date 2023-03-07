@@ -1,5 +1,4 @@
 import asyncio
-import os
 import signal
 import traceback
 from asyncio import CancelledError as CanceledError  # yes, i did that...
@@ -8,12 +7,13 @@ from typing import Any
 from typing import Callable
 from typing import cast
 
-import asyncpg
 from asyncpg import Pool
 from asyncpg.connection import Connection
 
 from pyqueuephant.job import Job
+from pyqueuephant.job import JobStatus
 from pyqueuephant.job import TaskFailed
+from pyqueuephant.job import TaskNotFound
 from pyqueuephant.job_manager import JobManager
 
 PG_NOTIFY_CHANNEL = "pyqueuephant"
@@ -58,7 +58,7 @@ class Worker:
         while not self.shutdown_requested:
             job = await self.manager.fetch_job()
             if job is not None:
-                print(f"Fetched a job ({job.name}) to process...")
+                print(f"Fetched a job ({job.id}) to process...")
                 await self.execute_job(job)
 
             else:
@@ -74,14 +74,18 @@ class Worker:
             task.add_done_callback(self.running_tasks.discard)
             self.running_tasks.add(task)
             await task
+            print(f"Finished to process job ({job.id}).")
+            job.status = JobStatus.finished
             await self.manager.finish_job(job)
-            print(f"Finished to process job ({job.name}).")
-        except TaskFailed:
-            tb = traceback.format_exc(chain=False)
-            await self.manager.fail_job(job, tb)
+        except (TaskFailed, TaskNotFound):
+            print(f"Failed Job ({job.id}).")
+            job.status = JobStatus.failed
+            tb = traceback.format_exc()
+            await self.manager.finish_job(job, traceback=tb)
         except CanceledError:
-            print(f"Canceled Job ({job.name}) due to worker shutdown.")
-            await self.manager.cancel_job(job, reason="Worker shutdown")  # TODO: DB!
+            print(f"Canceled Job ({job.id}) due to worker shutdown.")
+            job.status = JobStatus.canceled
+            await self.manager.finish_job(job)
 
     @staticmethod
     def _pg_notify_handler(
@@ -135,21 +139,3 @@ class Worker:
         listener = asyncio.create_task(self.listener())
 
         await asyncio.gather(*job_workers, listener, return_exceptions=False)
-
-
-async def main() -> None:
-    pool = await asyncpg.create_pool(
-        database="pyqueuephant",
-        user="postgres",
-        password="postgres",
-    )
-
-    worker = Worker(pool)
-
-    pid = os.getpid()
-    print(pid)
-    await worker.run()
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

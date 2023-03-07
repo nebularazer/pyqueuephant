@@ -161,5 +161,4 @@ cython_debug/
 
 .vscode/
 .dev/
-sql/
-pyqueuephant/some/
+/sql/
