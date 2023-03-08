@@ -5,4 +5,5 @@ class Queries:
     finish_job: str
     add_job_failure: str
 
+
 queries: Queries

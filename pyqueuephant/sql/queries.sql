@@ -17,7 +17,7 @@ WITH jobs_to_process AS (
         JOIN
             job d ON jd.depends_on_job_id = d.id
         WHERE
-            d.status != 'finished'
+            d.status NOT IN ('succeeded', 'failed')
     ) AS d ON j.id = d.job_id
 
     WHERE
@@ -28,7 +28,7 @@ WITH jobs_to_process AS (
                 JOIN job d2 ON jd2.depends_on_job_id = d2.id
             WHERE
                 jd2.job_id = j.id
-                AND d2.status != 'finished'
+                AND d2.status NOT IN ('succeeded', 'failed')
         )
         AND j.status = 'waiting'
     ORDER BY j.id

@@ -1,10 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import Any
-from typing import Awaitable
-from typing import Callable
-from typing import Protocol
 from typing import cast
 
 from asyncpg.connection import Connection
@@ -13,16 +9,6 @@ from asyncpg.pool import Pool
 from pyqueuephant.job import Job
 from pyqueuephant.job import JobStatus
 from pyqueuephant.sql import queries
-
-AbstractTaskFunction = Callable[[dict[str, Any]], Awaitable]
-
-
-class AbstractTaskClass(Protocol):
-    async def execute(self, payload: dict[str, Any]) -> None:
-        ...
-
-
-AbstractTask = AbstractTaskClass | AbstractTaskFunction
 
 
 class JobManager:

@@ -75,7 +75,7 @@ class Worker:
             self.running_tasks.add(task)
             await task
             print(f"Finished to process job ({job.id}).")
-            job.status = JobStatus.finished
+            job.status = JobStatus.succeeded
             await self.manager.finish_job(job)
         except (TaskFailed, TaskNotFound):
             print(f"Failed Job ({job.id}).")

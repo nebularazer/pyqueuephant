@@ -8,19 +8,14 @@ from dataclasses import field
 from enum import StrEnum
 from enum import auto
 from typing import Any
-from typing import Awaitable
-from typing import Callable
-from typing import Protocol
 from typing import cast
+from uuid import UUID
+from uuid import uuid4
 
-
-class AbstractTaskClass(Protocol):
-    async def execute(self, payload: dict[str, Any]) -> None:
-        ...
-
-
-AbstractTaskFunction = Callable[[dict[str, Any]], Awaitable]
-AbstractTask = AbstractTaskClass | AbstractTaskFunction
+from pyqueuephant.types import AbstractTask
+from pyqueuephant.types import AbstractTaskClass
+from pyqueuephant.types import AbstractTaskFunction
+from pyqueuephant.types import JsonDict
 
 
 class TaskFailed(Exception):
@@ -34,7 +29,7 @@ class TaskNotFound(Exception):
 class JobStatus(StrEnum):
     waiting = auto()
     working = auto()
-    finished = auto()
+    succeeded = auto()
     failed = auto()
     canceled = auto()
 
@@ -42,16 +37,16 @@ class JobStatus(StrEnum):
 @dataclass
 class JobFailure:
     id: int
-    job_id: int
+    job_id: UUID
     attempt: int
     traceback: str
 
 
 @dataclass
 class Job:
-    id: int
+    id: UUID
     task_path: str
-    task_args: dict[str, Any] = field(default_factory=dict)
+    task_args: JsonDict = field(default_factory=dict)
     status: JobStatus = JobStatus.waiting
     depends_on_jobs: list[Job] | None = None
 
@@ -68,13 +63,12 @@ class Job:
 
     @staticmethod
     def create(
-        id: int,
         task_path: str,
-        task_args: dict[str, Any] = {},
+        task_args: JsonDict = {},
         depends_on_jobs: list[Job] | None = None,
     ) -> Job:
         return Job(
-            id=id,
+            id=uuid4(),
             task_path=task_path,
             task_args=task_args,
             depends_on_jobs=depends_on_jobs,
