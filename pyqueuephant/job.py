@@ -40,12 +40,15 @@ class Job:
     status: JobStatus = JobStatus.waiting
     depends_on_jobs: list[Job] = field(default_factory=list)
 
-    @staticmethod
+    @classmethod
     def create(
-        task_path: str,
+        cls: type[Job],
+        task: type[AbstractTask],
         task_args: JsonDict | None = None,
         depends_on_jobs: list[Job] | None = None,
     ) -> Job:
+        task_path = cls._serialize_task(task)
+
         if task_args is None:
             task_args = {}
 
@@ -59,7 +62,11 @@ class Job:
             depends_on_jobs=depends_on_jobs,
         )
 
-    async def run_task(self) -> None:
+    @staticmethod
+    def _serialize_task(task: type[AbstractTask]) -> str:
+        return f"{task.__module__}:{task.__name__}"
+
+    def _deserialize_task(self) -> AbstractTask:
         path, name = self.task_path.split(":")
         try:
             if path in sys.modules:
@@ -71,13 +78,18 @@ class Job:
 
         class_or_function: AbstractTask = getattr(module, name)
 
+        return class_or_function
+
+    async def run_task(self) -> None:
+        task = self._deserialize_task()
+
         try:
-            if inspect.isclass(class_or_function):
-                instance: AbstractTaskClass = class_or_function()
+            if inspect.isclass(task):
+                instance: AbstractTaskClass = task()
                 await instance.execute(self.task_args)
 
             else:
-                class_or_function = cast(AbstractTaskFunction, class_or_function)
-                await class_or_function(self.task_args)
+                task = cast(AbstractTaskFunction, task)
+                await task(self.task_args)
         except Exception:
             raise TaskFailed

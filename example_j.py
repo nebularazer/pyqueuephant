@@ -15,31 +15,25 @@ async def main() -> None:
 
     jm = JobManager(engine)
 
-    job1 = Job.create(
-        task_path=f"{Task1Class.__module__}:{Task1Class.__name__}",
-        task_args={"a": randint(1, 15)},
-    )
-    job2 = Job.create(
-        task_path=f"{Task1Class.__module__}:{Task1Class.__name__}",
-        task_args={"a": randint(1, 15)},
-    )
+    job1 = Job.create(task=Task1Class, task_args={"a": randint(1, 15)})
+    job2 = Job.create(task=Task1Class, task_args={"a": randint(1, 15)})
     job3 = Job.create(
-        task_path=f"{Task1Class.__module__}:{Task1Class.__name__}",
+        task=Task1Class,
         task_args={"a": randint(1, 15)},
         depends_on_jobs=[job2],
     )
     job4 = Job.create(
-        task_path=f"{Task1Class.__module__}:{Task1Class.__name__}",
+        task=Task1Class,
         task_args={"a": randint(1, 15)},
         depends_on_jobs=[job3],
     )
     job5 = Job.create(
-        task_path=f"{Task1Class.__module__}:{Task1Class.__name__}",
+        task=Task1Class,
         task_args={"a": randint(1, 15)},
         depends_on_jobs=[job1, job3],
     )
     job6 = Job.create(
-        task_path=f"{Task1Class.__module__}:{Task1Class.__name__}",
+        task=Task1Class,
         task_args={"a": randint(1, 15)},
         depends_on_jobs=[job1, job2, job3, job4],
     )
