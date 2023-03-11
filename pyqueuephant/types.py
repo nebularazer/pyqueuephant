@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from enum import StrEnum
+from enum import auto
 from typing import Awaitable
 from typing import Callable
 from typing import Protocol
@@ -16,3 +18,11 @@ class AbstractTaskClass(Protocol):
 
 AbstractTaskFunction = Callable[[JsonDict], Awaitable]
 AbstractTask = AbstractTaskClass | AbstractTaskFunction
+
+
+class JobStatus(StrEnum):
+    waiting = auto()
+    working = auto()
+    succeeded = auto()
+    failed = auto()
+    canceled = auto()

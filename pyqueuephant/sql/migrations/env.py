@@ -81,6 +81,8 @@ def include_name(name: str, type_: str, parent_names: dict) -> bool:
     if type_ == "table":
         return not name.startswith(("job_", "periodic_"))
 
+    return False
+
 
 # def include_object(object, name, type_, reflected, compare_to):
 #     if (type_ == "column" and

@@ -1,63 +1,49 @@
 from __future__ import annotations
 
-import json
-from typing import cast
-
-from asyncpg.connection import Connection
-from asyncpg.pool import Pool
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pyqueuephant.job import Job
-from pyqueuephant.job import JobStatus
 from pyqueuephant.sql import queries
 
 
 class JobManager:
-    def __init__(self, pool: Pool) -> None:
-        self.pool = pool
+    def __init__(self, engine: AsyncEngine) -> None:
+        self.engine = engine
 
-    async def defer_job(self, *jobs: Job) -> None:
-        async with self.pool.acquire() as connection:
-            connection = cast(Connection, connection)
-            async with connection.transaction():
-                await connection.executemany(
-                    queries.defer_job,
-                    [
-                        (job.id, job.task_path, json.dumps(job.task_args))
-                        for job in jobs
-                    ],
+    async def defer_jobs(self, *jobs: Job) -> None:
+        async with self.engine.begin() as connection:
+            await connection.execute(queries.defer_jobs(*jobs))
+
+            for job in jobs:
+                if not job.depends_on_jobs:
+                    continue
+
+                dependency_ids = [depends.id for depends in job.depends_on_jobs]
+                await connection.execute(
+                    queries.add_job_dependencies(job.id, dependency_ids)
                 )
-                for job in jobs:
-                    if job.depends_on_jobs is None:
-                        continue
-                    await connection.executemany(
-                        queries.add_job_dependencies,
-                        [(job.id, depends.id) for depends in job.depends_on_jobs],
-                    )
 
     async def fetch_job(self) -> Job | None:
-        async with self.pool.acquire() as connection:
-            connection = cast(Connection, connection)
-            row = await connection.fetchrow(queries.fetch_job)
+        async with self.engine.begin() as connection:
+            result = await connection.execute(queries.fetch_job())
+            row = result.one_or_none()
 
         if not row:
             return None
 
-        return Job.from_row(row)
+        job_id, status, path, args = row
 
-    async def finish_job(self, job: Job, traceback: str | None = None) -> None:
-        # TODO: reason
-        async with self.pool.acquire() as connection:
-            connection = cast(Connection, connection)
-            async with connection.transaction():
+        return Job(id=job_id, task_path=path, task_args=args, status=status)
+
+    async def finish_job(self, job: Job, result: str | None = None) -> None:
+        async with self.engine.begin() as connection:
+            await connection.execute(queries.finish_job(job.id, job.status))
+
+            if result is not None:
                 await connection.execute(
-                    queries.finish_job,
-                    job.status.value,
-                    job.id,
-                )
-                if job.status == JobStatus.failed:
-                    await connection.execute(
-                        queries.add_job_failure,
-                        job.id,
-                        1,
-                        traceback,
+                    queries.add_job_result(
+                        job_id=job.id,
+                        attempt=1,  # TODO: fix me
+                        result=result,
                     )
+                )

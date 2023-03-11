@@ -5,9 +5,6 @@ import inspect
 import sys
 from dataclasses import dataclass
 from dataclasses import field
-from enum import StrEnum
-from enum import auto
-from typing import Any
 from typing import cast
 from uuid import UUID
 from uuid import uuid4
@@ -15,6 +12,7 @@ from uuid import uuid4
 from pyqueuephant.types import AbstractTask
 from pyqueuephant.types import AbstractTaskClass
 from pyqueuephant.types import AbstractTaskFunction
+from pyqueuephant.types import JobStatus
 from pyqueuephant.types import JsonDict
 
 
@@ -26,20 +24,12 @@ class TaskNotFound(Exception):
     pass
 
 
-class JobStatus(StrEnum):
-    waiting = auto()
-    working = auto()
-    succeeded = auto()
-    failed = auto()
-    canceled = auto()
-
-
 @dataclass
-class JobFailure:
+class JobResult:
     id: int
     job_id: UUID
-    attempt: int
-    traceback: str
+    attempt: int = 1
+    result: str | None = None
 
 
 @dataclass
@@ -48,25 +38,20 @@ class Job:
     task_path: str
     task_args: JsonDict = field(default_factory=dict)
     status: JobStatus = JobStatus.waiting
-    depends_on_jobs: list[Job] | None = None
-
-    @classmethod
-    def from_row(cls, row: Any) -> Job:
-        task_args = row["task_args"]
-
-        return Job(
-            id=row["id"],
-            status=JobStatus(row["status"]),
-            task_path=row["task_path"],
-            task_args=task_args if task_args is not None else {},
-        )
+    depends_on_jobs: list[Job] = field(default_factory=list)
 
     @staticmethod
     def create(
         task_path: str,
-        task_args: JsonDict = {},
+        task_args: JsonDict | None = None,
         depends_on_jobs: list[Job] | None = None,
     ) -> Job:
+        if task_args is None:
+            task_args = {}
+
+        if depends_on_jobs is None:
+            depends_on_jobs = []
+
         return Job(
             id=uuid4(),
             task_path=task_path,

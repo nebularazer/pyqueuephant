@@ -9,7 +9,7 @@ from sqlalchemy.types import SMALLINT
 from sqlalchemy.types import DateTime
 from sqlalchemy.types import String
 
-from pyqueuephant.job_manager import JobStatus
+from pyqueuephant.types import JobStatus
 
 metadata = MetaData()
 
@@ -31,7 +31,7 @@ job_event_type = postgresql.ENUM(
 )
 
 # TABLES
-job = Table(
+job_table = Table(
     f"{TABLE_PREFIX}job",
     metadata,
     Column(
@@ -46,7 +46,7 @@ job = Table(
     Column("task_args", postgresql.JSONB, nullable=False, server_default="{}"),
 )
 
-job_dependency = Table(
+job_dependency_table = Table(
     f"{TABLE_PREFIX}job_dependency",
     metadata,
     Column("id", BIGINT, primary_key=True),
@@ -61,7 +61,7 @@ job_dependency = Table(
     ),
 )
 
-job_result = Table(
+job_result_table = Table(
     f"{TABLE_PREFIX}job_result",
     metadata,
     Column("id", BIGINT, primary_key=True),
@@ -101,8 +101,8 @@ def main() -> None:
     from sqlalchemy import select
     from sqlalchemy import update
 
-    job_dep1 = job_dependency.alias("job_dep1")
-    job_dep2 = job.alias("job_dep2")
+    job_dep1 = job_dependency_table.alias("job_dep1")
+    job_dep2 = job_table.alias("job_dep2")
 
     job_depens = (
         select(literal_column("1"))
@@ -113,28 +113,28 @@ def main() -> None:
             )
         )
         .where(
-            job_dep1.c.job_id == job.c.id,
+            job_dep1.c.job_id == job_table.c.id,
             job_dep2.c.status != "succeeded",
         )
         .exists()
     )
 
     job_to_process = (
-        select(job)
+        select(job_table)
         .where(
-            job.c.status == JobStatus.waiting,
+            job_table.c.status == JobStatus.waiting,
             ~job_depens,
         )
         .limit(1)
-        .with_for_update(of=job, skip_locked=True)
+        .with_for_update(of=job_table, skip_locked=True)
         .cte(name="job_to_process")
     )
 
     update_query = (
-        update(job)
+        update(job_table)
         .values(status=JobStatus.working)
-        .where(job_to_process.c.id == job.c.id)
-        .returning(job)
+        .where(job_to_process.c.id == job_table.c.id)
+        .returning(job_table)
     )
 
     engine = create_engine("postgresql+asyncpg://postgres:postgres@localhost")

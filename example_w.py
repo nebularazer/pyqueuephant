@@ -1,18 +1,16 @@
 import asyncio
 
-import asyncpg
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from pyqueuephant.worker import Worker
 
 
 async def main() -> None:
-    pool = await asyncpg.create_pool(
-        database="pyqueuephant",
-        user="postgres",
-        password="postgres",
+    engine = create_async_engine(
+        "postgresql+asyncpg://postgres:postgres@localhost/pyqueuephant"
     )
 
-    worker = Worker(pool)
+    worker = Worker(engine)
 
     await worker.run()
 

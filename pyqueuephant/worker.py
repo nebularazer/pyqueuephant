@@ -7,8 +7,8 @@ from typing import Any
 from typing import Callable
 from typing import cast
 
-from asyncpg import Pool
 from asyncpg.connection import Connection
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from pyqueuephant.job import Job
 from pyqueuephant.job import JobStatus
@@ -25,18 +25,18 @@ WORKER_CONCURRENCY = 3
 class Worker:
     def __init__(
         self,
-        pool: Pool,
+        engine: AsyncEngine,
         channel: str = PG_NOTIFY_CHANNEL,
         shutdown_timeout: int = SHUTDOWN_TIMEOUT,
         concurrency: int = WORKER_CONCURRENCY,
     ) -> None:
-        self.pool = pool
+        self.engine = engine
         self.channel = channel
         self.shutdown_timeout = shutdown_timeout
         self.concurrency = concurrency
 
         self.event = asyncio.Event()
-        self.manager = JobManager(pool=pool)
+        self.manager = JobManager(engine=engine)
         self._shutdown_requested = False
         self._shutdown_event = asyncio.Event()
 
@@ -81,11 +81,11 @@ class Worker:
             print(f"Failed Job ({job.id}).")
             job.status = JobStatus.failed
             tb = traceback.format_exc()
-            await self.manager.finish_job(job, traceback=tb)
+            await self.manager.finish_job(job, result=tb)
         except CanceledError:
             print(f"Canceled Job ({job.id}) due to worker shutdown.")
             job.status = JobStatus.canceled
-            await self.manager.finish_job(job)
+            await self.manager.finish_job(job, result="Canceled by worker shutdown.")
 
     @staticmethod
     def _pg_notify_handler(
@@ -117,15 +117,15 @@ class Worker:
             print("Wait for unfinished tasks cleanup...")
 
     async def listener(self) -> None:
-        async with self.pool.acquire() as connection:
-            connection = cast(Connection, connection)
+        async with self.engine.connect() as connection:
+            raw = await connection.get_raw_connection()
+            asyncpg_conn = cast(Connection, raw.driver_connection)
             handler = self._pg_notify_handler(self.event)
-            await connection.add_listener(self.channel, handler)
+            await asyncpg_conn.add_listener(self.channel, handler)
 
             await self._shutdown_event.wait()
-            print("No longer waiting for pg notify.")
 
-            await connection.remove_listener(self.channel, handler)
+            await asyncpg_conn.remove_listener(self.channel, handler)
 
     async def run(self) -> None:
         loop = asyncio.get_event_loop()

@@ -15,7 +15,7 @@ sqlalchemy = {extras = ["mypy", "postgresql-asyncpg"], version = "^2.0.5.post1"}
 black = "^23.1.0"
 flake8 = "^6.0.0"
 isort = "^5.12.0"
-mypy = "^1.0.1"
+mypy = "^1.1.1"
 pydocstyle = {extras = ["toml"], version = "^6.3.0"}
 alembic = "^1.10.2"
 

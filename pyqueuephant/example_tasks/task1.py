@@ -1,13 +1,22 @@
 import asyncio
-import json
 import random
 from typing import Any
+from typing import TypedDict
+from typing import cast
+
+from pyqueuephant.types import JsonDict
+
+
+class ExamplePayload(TypedDict):
+    a: int
 
 
 class Task1Class:
-    async def execute(self, payload: str) -> None:
+    async def execute(self, payload: JsonDict) -> None:
         fail = random.choice((False, False))
-        data = json.loads(payload)
+
+        data = cast(ExamplePayload, payload)
+
         sleep = data["a"]
         print(f"sleeping for: {sleep}")
         await asyncio.sleep(sleep)
