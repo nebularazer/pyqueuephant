@@ -11,8 +11,9 @@ from sqlalchemy.engine import engine_from_config
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.ext.asyncio.engine import async_engine_from_config
+from sqlalchemy.schema import SchemaItem
 
-from pyqueuephant.sql import tables
+import pyqueuephant.sql
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -27,7 +28,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = tables.metadata
+target_metadata = pyqueuephant.sql.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -54,6 +55,16 @@ def get_url() -> str:
     return f"postgresql+asyncpg://{user}:{password}@{host}/{path}"
 
 
+def include_object(
+    object: SchemaItem,
+    name: str,
+    type_: str,
+    reflected: bool,
+    compare_to: SchemaItem | None,
+) -> bool:
+    return name.startswith(("pyqueuephant", "public.pyqueuephant"))
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -69,6 +80,7 @@ def run_migrations_offline() -> None:
     context.configure(
         url=get_url(),
         target_metadata=target_metadata,
+        include_object=include_object,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -77,29 +89,13 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def include_name(name: str, type_: str, parent_names: dict) -> bool:
-    if type_ == "table":
-        return not name.startswith(("job_", "periodic_"))
-
-    return False
-
-
-# def include_object(object, name, type_, reflected, compare_to):
-#     if (type_ == "column" and
-#         not reflected and
-#         object.info.get("skip_autogenerate", False)):
-#         return False
-#     else:
-#         return True
-
-
 def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
-        include_name=include_name,
+        include_object=include_object,
     )
 
     with context.begin_transaction():

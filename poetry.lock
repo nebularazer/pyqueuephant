@@ -2,7 +2,7 @@
 name = "alembic"
 version = "1.10.2"
 description = "A database migration tool for SQLAlchemy."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -13,6 +13,26 @@ typing-extensions = ">=4"
 
 [package.extras]
 tz = ["python-dateutil"]
+
+[[package]]
+name = "alembic-utils"
+version = "0.8.1"
+description = "A sqlalchemy/alembic extension for migrating procedures and views"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+alembic = ">=1.5.7"
+flupy = "*"
+parse = ">=1.8.4"
+sqlalchemy = ">=1.4"
+typing_extensions = "*"
+
+[package.extras]
+dev = ["black", "mkdocs", "mypy", "pre-commit", "psycopg2-binary", "pylint", "pytest", "pytest-cov"]
+docs = ["mkautodoc", "mkdocs", "pygments", "pymdown-extensions"]
+nvim = ["neovim", "python-language-server"]
 
 [[package]]
 name = "asyncpg"
@@ -107,6 +127,20 @@ pycodestyle = ">=2.10.0,<2.11.0"
 pyflakes = ">=3.0.0,<3.1.0"
 
 [[package]]
+name = "flupy"
+version = "1.2.0"
+description = "Method chaining built on generators"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+typing_extensions = "*"
+
+[package.extras]
+dev = ["black", "mypy", "pre-commit", "pylint", "pytest", "pytest-benchmark", "pytest-cov"]
+
+[[package]]
 name = "greenlet"
 version = "2.0.2"
 description = "Lightweight in-process concurrent programming"
@@ -144,7 +178,7 @@ requirements-deprecated-finder = ["pip-api", "pipreqs"]
 name = "mako"
 version = "1.2.4"
 description = "A super-fast templating language that borrows the best ideas from the existing templating languages."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -160,7 +194,7 @@ testing = ["pytest"]
 name = "markupsafe"
 version = "2.1.2"
 description = "Safely add untrusted strings to HTML/XML markup."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -205,6 +239,14 @@ description = "Core utilities for Python packages"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
+
+[[package]]
+name = "parse"
+version = "1.19.0"
+description = "parse() is the opposite of format()"
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "pathspec"
@@ -357,12 +399,15 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.11"
-content-hash = "2db971967b3eb2318e87f46a9055e40876fd9198b1a9aef5bbf461ec5ddf89a8"
+content-hash = "d8e6c37ecf35a4438d498a4d97112eef0d08c192ca58cf410b644d6b35048f9e"
 
 [metadata.files]
 alembic = [
     {file = "alembic-1.10.2-py3-none-any.whl", hash = "sha256:8b48368f6533c064b39c024e1daba15ae7f947eac84185c28c06bbe1301a5497"},
     {file = "alembic-1.10.2.tar.gz", hash = "sha256:457eafbdc0769d855c2c92cbafe6b7f319f916c80cf4ed02b8f394f38b51b89d"},
+]
+alembic-utils = [
+    {file = "alembic_utils-0.8.1.tar.gz", hash = "sha256:073626217c8d8bdc66d1f66f8866d4f743969ac08502ba3bc15bcd60190460d7"},
 ]
 asyncpg = [
     {file = "asyncpg-0.27.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:fca608d199ffed4903dce1bcd97ad0fe8260f405c1c225bdf0002709132171c2"},
@@ -497,6 +542,9 @@ coverage = [
 flake8 = [
     {file = "flake8-6.0.0-py2.py3-none-any.whl", hash = "sha256:3833794e27ff64ea4e9cf5d410082a8b97ff1a06c16aa3d2027339cd0f1195c7"},
     {file = "flake8-6.0.0.tar.gz", hash = "sha256:c61007e76655af75e6785a931f452915b371dc48f56efd765247c8fe68f2b181"},
+]
+flupy = [
+    {file = "flupy-1.2.0.tar.gz", hash = "sha256:12487a008e9744cd35d0f6ea3cfa06f4b2b27cb138bf57d0788f5c26e57afe69"},
 ]
 greenlet = [
     {file = "greenlet-2.0.2-cp27-cp27m-macosx_10_14_x86_64.whl", hash = "sha256:bdfea8c661e80d3c1c99ad7c3ff74e6e87184895bbaca6ee8cc61209f8b9b85d"},
@@ -663,6 +711,9 @@ mypy-extensions = [
 packaging = [
     {file = "packaging-23.0-py3-none-any.whl", hash = "sha256:714ac14496c3e68c99c29b00845f7a2b85f3bb6f1078fd9f72fd20f0570002b2"},
     {file = "packaging-23.0.tar.gz", hash = "sha256:b6ad297f8907de0fa2fe1ccbd26fdaf387f5f47c7275fedf8cce89f99446cf97"},
+]
+parse = [
+    {file = "parse-1.19.0.tar.gz", hash = "sha256:9ff82852bcb65d139813e2a5197627a94966245c897796760a3a2a8eb66f020b"},
 ]
 pathspec = [
     {file = "pathspec-0.11.0-py3-none-any.whl", hash = "sha256:3a66eb970cbac598f9e5ccb5b2cf58930cd8e3ed86d393d541eaf2d8b1705229"},

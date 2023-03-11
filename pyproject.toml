@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.11"
 asyncpg = "^0.27.0"
 sqlalchemy = {extras = ["mypy", "postgresql-asyncpg"], version = "^2.0.5.post1"}
+alembic-utils = "^0.8.1"
 
 
 [tool.poetry.group.dev.dependencies]
