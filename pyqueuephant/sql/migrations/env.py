@@ -79,6 +79,7 @@ def run_migrations_offline() -> None:
     """
     context.configure(
         url=get_url(),
+        version_table="pyqueuephant_alembic_version",
         target_metadata=target_metadata,
         include_object=include_object,
         literal_binds=True,
@@ -91,6 +92,7 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection: Connection) -> None:
     context.configure(
+        version_table="pyqueuephant_alembic_version",
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
